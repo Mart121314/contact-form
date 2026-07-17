@@ -1,12 +1,21 @@
 const { Resend } = require('resend');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 module.exports = async function handler(req, res) {
+  if (req.method === 'GET') {
+    return res.status(200).json({ hasApiKey: Boolean(process.env.RESEND_API_KEY) });
+  }
+
   if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST');
+    res.setHeader('Allow', 'POST, GET');
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  if (!process.env.RESEND_API_KEY) {
+    console.error('RESEND_API_KEY is not set');
+    return res.status(500).json({ error: 'Server er ikke konfigurert riktig (mangler API-nøkkel).' });
+  }
+
+  const resend = new Resend(process.env.RESEND_API_KEY);
 
   const { name, email, message } = req.body || {};
 
