@@ -136,7 +136,7 @@
 <body>
   <div class="card">
     <h1>Ta kontakt</h1>
-    <p class="subtitle">Fyll ut skjemaet, så åpnes e-postklienten din med meldingen klar til å sendes.</p>
+    <p class="subtitle">Fyll ut skjemaet, så sender vi meldingen din direkte.</p>
 
     <form id="contactForm">
       <label for="name">Navn</label>
@@ -148,8 +148,8 @@
       <label for="message">Melding</label>
       <textarea id="message" name="message" required></textarea>
 
-      <button type="submit">Send melding</button>
-      <p class="status" id="status">Åpner e-postklienten din...</p>
+      <button type="submit" id="submitBtn">Send melding</button>
+      <p class="status" id="status"></p>
     </form>
 
     <div class="footer">
@@ -160,24 +160,42 @@
   </div>
 
 <script>
-  document.getElementById('contactForm').addEventListener('submit', function (e) {
+  const form = document.getElementById('contactForm');
+  const status = document.getElementById('status');
+  const submitBtn = document.getElementById('submitBtn');
+
+  form.addEventListener('submit', async function (e) {
     e.preventDefault();
 
     const name = document.getElementById('name').value.trim();
     const email = document.getElementById('email').value.trim();
     const message = document.getElementById('message').value.trim();
 
-    const subject = encodeURIComponent('Henvendelse fra ' + name);
-    const body = encodeURIComponent(
-      'Navn: ' + name + '\n' +
-      'E-post: ' + email + '\n\n' +
-      message
-    );
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sender...';
+    status.classList.remove('show');
 
-    window.location.href = 'mailto:it_utvikling@martineikefet.dev?subject=' + subject + '&body=' + body;
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, message }),
+      });
 
-    const status = document.getElementById('status');
-    status.classList.add('show');
+      if (!response.ok) {
+        throw new Error('Request failed');
+      }
+
+      status.textContent = 'Takk! Meldingen din er sendt.';
+      status.classList.add('show');
+      form.reset();
+    } catch (err) {
+      status.textContent = 'Noe gikk galt. Prøv igjen, eller send oss en e-post direkte.';
+      status.classList.add('show');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Send melding';
+    }
   });
 </script>
 </body>
